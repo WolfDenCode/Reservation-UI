@@ -128,6 +128,17 @@
       let endDate = null;
 
       function updateCalendar() {
+        const occupiedDates = [
+          { startDate: "2024-12-10", endDate: "2024-12-15" },
+          { startDate: "2024-12-3", endDate: "2024-12-4" },
+          { startDate: "2024-12-8", endDate: "2024-12-10" },
+        ];
+
+        occupiedDates.sort((a, b) => {
+          return new Date(b.startDate) - new Date(a.startDate);
+        });
+        occupiedDates.reverse();
+        console.log(occupiedDates);
         calendar.innerHTML = "";
 
         const firstDay = new Date(currentYear, currentMonth, 1);
@@ -154,17 +165,37 @@
           const dayDate = new Date(dateStr);
 
           // Highlight previously selected dates
-          if (startDate && endDate) {
-            if (dayDate.getTime() === startDate.getTime()) {
-              dayDiv.classList.add("afternoon");
-            } else if (dayDate.getTime() === endDate.getTime()) {
-              dayDiv.classList.add("morning");
-            } else if (dayDate > startDate && dayDate < endDate) {
-              dayDiv.classList.add("full");
+
+          occupiedDates.forEach((occupation) => {
+            const startingDate = new Date(occupation.startDate);
+            const endingDate = new Date(occupation.endDate);
+            if (startingDate.getMonth() != currentMonth) {
+              let d = startingDate;
+              let monthStartDate = null;
+              // search for the start in the displayed month
+              while (!monthStartDate && d <= endingDate) {
+                if (
+                  d.getMonth() == currentMonth &&
+                  d.getFullYear() == currentYear
+                ) {
+                  monthStartDate = d;
+                }
+                d.setDate(d.getDate() + 1);
+              }
+              // if the end is not in the displayed month either
+              // then go till the last month displayed
+              if (
+                endingDate.getMonth() > currentMonth ||
+                endingDate.getFullYear() > currentYear
+              ) {
+                highlightRange(monthStartDate, lastDay);
+              } else {
+                highlightRange(monthStartDate, endingDate);
+              }
+            } else {
+              highlightRange(startingDate, endingDate);
             }
-          } else if (startDate && dayDate.getTime() === startDate.getTime()) {
-            dayDiv.classList.add("afternoon");
-          }
+          });
 
           // Disable dates before startDate
           if (!selectingStart && dayDate < startDate) {
@@ -192,8 +223,10 @@
           startDate = selectedDate;
           endDate = null; // Reset end date
           clearSelection();
+          updateCalendar();
           dayDiv.classList.add("afternoon");
           selectingStart = false;
+          highlightRange(startDate, null);
         } else {
           if (selectedDate <= startDate) {
             alert("End date must be after the start date.");
@@ -201,7 +234,7 @@
           }
           endDate = selectedDate;
           dayDiv.classList.add("morning");
-          highlightRange();
+          highlightRange(startDate, endDate);
           selectingStart = true;
         }
         updateDisabledDays();
@@ -226,17 +259,31 @@
         });
       }
 
-      function highlightRange() {
+      function highlightRange(startDate, endDate) {
+        if (!startDate) return;
+
         const allDays = document.querySelectorAll(".day");
         allDays.forEach((day) => {
           const dayDate = new Date(day.dataset.date);
 
-          if (dayDate > startDate && dayDate < endDate) {
+          if (startDate.getDate() === dayDate.getDate() && !endDate) {
+            day.classList.add("afternoon");
+            return;
+          }
+
+          if (!endDate || dayDate < startDate || dayDate > endDate) {
+            return;
+          }
+
+          if (dayDate.getDate() === startDate.getDate()) {
+            day.classList.add("afternoon");
+          } else if (dayDate.getDate() === endDate.getDate()) {
+            day.classList.add("morning");
+          } else {
             day.classList.add("full");
           }
         });
       }
-
       prevMonthBtn.addEventListener("click", () => {
         currentMonth--;
         if (currentMonth < 0) {
@@ -252,6 +299,7 @@
           currentMonth = 0;
           currentYear++;
         }
+
         updateCalendar();
       });
 
