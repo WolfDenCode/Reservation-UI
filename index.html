@@ -134,11 +134,6 @@
           { startDate: "2024-12-8", endDate: "2024-12-10" },
         ];
 
-        occupiedDates.sort((a, b) => {
-          return new Date(b.startDate) - new Date(a.startDate);
-        });
-        occupiedDates.reverse();
-        console.log(occupiedDates);
         calendar.innerHTML = "";
 
         const firstDay = new Date(currentYear, currentMonth, 1);
@@ -164,56 +159,23 @@
 
           const dayDate = new Date(dateStr);
 
-          // Highlight previously selected dates
-
-          occupiedDates.forEach((occupation) => {
-            const startingDate = new Date(occupation.startDate);
-            const endingDate = new Date(occupation.endDate);
-            if (startingDate.getMonth() != currentMonth) {
-              let d = startingDate;
-              let monthStartDate = null;
-              // search for the start in the displayed month
-              while (!monthStartDate && d <= endingDate) {
-                if (
-                  d.getMonth() == currentMonth &&
-                  d.getFullYear() == currentYear
-                ) {
-                  monthStartDate = d;
-                }
-                d.setDate(d.getDate() + 1);
-              }
-              // if the end is not in the displayed month either
-              // then go till the last month displayed
-              if (
-                endingDate.getMonth() > currentMonth ||
-                endingDate.getFullYear() > currentYear
-              ) {
-                highlightRange(monthStartDate, lastDay);
-              } else {
-                highlightRange(monthStartDate, endingDate);
-              }
-            } else {
-              highlightRange(startingDate, endingDate);
-            }
-          });
-
-          // Disable dates before startDate
-          if (!selectingStart && dayDate < startDate) {
-            dayDiv.classList.add("disabled");
-          }
-
           dayDiv.addEventListener("click", () => handleDateSelection(dayDiv));
           calendar.appendChild(dayDiv);
         }
 
-        if (
-          currentYear === today.getFullYear() &&
-          currentMonth === today.getMonth()
-        ) {
-          prevMonthBtn.disabled = true;
-        } else {
-          prevMonthBtn.disabled = false;
-        }
+        highlightOccupiedDates(
+          occupiedDates,
+          currentMonth,
+          currentYear,
+          lastDay
+        );
+        persistUserSelection(
+          startDate,
+          endDate,
+          currentMonth,
+          currentYear,
+          lastDay
+        );
       }
 
       function handleDateSelection(dayDiv) {
@@ -224,39 +186,106 @@
           endDate = null; // Reset end date
           clearSelection();
           updateCalendar();
-          dayDiv.classList.add("afternoon");
           selectingStart = false;
-          highlightRange(startDate, null);
         } else {
           if (selectedDate <= startDate) {
             alert("End date must be after the start date.");
             return;
           }
           endDate = selectedDate;
-          dayDiv.classList.add("morning");
-          highlightRange(startDate, endDate);
           selectingStart = true;
         }
-        updateDisabledDays();
-      }
-
-      function updateDisabledDays() {
-        const allDays = document.querySelectorAll(".day");
-        allDays.forEach((day) => {
-          const dayDate = new Date(day.dataset.date);
-
-          if (!selectingStart && dayDate < startDate) {
-            day.classList.add("disabled");
-          } else {
-            day.classList.remove("disabled");
-          }
-        });
+        updateCalendar();
       }
 
       function clearSelection() {
         document.querySelectorAll(".day").forEach((day) => {
           day.classList.remove("afternoon", "morning", "full", "disabled");
         });
+      }
+
+      // Utility function to calculate the start and end of the highlighted range
+      function calculateHighlightRange(
+        occupation,
+        currentMonth,
+        currentYear,
+        lastDay
+      ) {
+        const startingDate = new Date(occupation.startDate);
+        const endingDate = new Date(occupation.endDate);
+
+        if (startingDate.getMonth() !== currentMonth) {
+          let d = startingDate;
+          let monthStartDate = null;
+          while (!monthStartDate && d <= endingDate) {
+            if (
+              d.getMonth() === currentMonth &&
+              d.getFullYear() === currentYear
+            ) {
+              monthStartDate = new Date(d);
+            }
+            d.setDate(d.getDate() + 1);
+          }
+
+          if (
+            endingDate.getMonth() > currentMonth ||
+            endingDate.getFullYear() > currentYear
+          ) {
+            return { start: monthStartDate, end: lastDay };
+          } else {
+            return { start: monthStartDate, end: endingDate };
+          }
+        } else {
+          return { start: startingDate, end: endingDate };
+        }
+      }
+
+      // Highlight occupied dates
+      function highlightOccupiedDates(
+        occupiedDates,
+        currentMonth,
+        currentYear,
+        lastDay
+      ) {
+        occupiedDates.forEach((occupation) => {
+          const { start, end } = calculateHighlightRange(
+            occupation,
+            currentMonth,
+            currentYear,
+            lastDay
+          );
+          if (start && end) {
+            highlightRange(start, end);
+          }
+        });
+      }
+
+      // Persistent highlighting for user selection
+      function persistUserSelection(
+        startDate,
+        endDate,
+        currentMonth,
+        currentYear,
+        lastDay
+      ) {
+        if (startDate && endDate) {
+          const { start, end } = calculateHighlightRange(
+            { startDate, endDate },
+            currentMonth,
+            currentYear,
+            lastDay
+          );
+          if (start && end) {
+            highlightRange(start, end);
+          }
+        } else if (
+          startDate &&
+          !endDate &&
+          startDate.getMonth() == currentMonth &&
+          startDate.getFullYear() == currentYear
+        ) {
+          highlightRange(startDate, null);
+        }
       }
 
       function highlightRange(startDate, endDate) {
@@ -284,6 +313,7 @@
           }
         });
       }
+
       prevMonthBtn.addEventListener("click", () => {
         currentMonth--;
         if (currentMonth < 0) {
@@ -299,7 +329,6 @@
           currentMonth = 0;
           currentYear++;
         }
-
         updateCalendar();
       });
 
