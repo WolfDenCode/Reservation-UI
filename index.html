@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Booking UI</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 20px;
+      }
+
+      .calendar-container {
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .calendar-header {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      .calendar-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+        margin-top: 10px;
+      }
+
+      .day.disabled {
+        pointer-events: none;
+        opacity: 0.5;
+      }
+
+      .day {
+        position: relative;
+        width: 100%;
+        padding-top: 100%;
+        border-radius: 5px;
+        background-color: #eaeaea;
+        cursor: pointer;
+        overflow: hidden; /* Ensure polygon shapes don't overflow */
+      }
+
+      .day span {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 14px;
+        z-index: 2; /* Ensure text stays on top */
+      }
+
+      .day.afternoon::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        clip-path: polygon(100% 0%, 100% 100%, 0% 100%);
+
+        background-color: #8bc34a;
+        z-index: 1;
+      }
+
+      .day.morning::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        clip-path: polygon(0% 0%, 100% 0%, 0% 100%);
+        background-color: #8bc34a;
+        z-index: 1;
+      }
+
+      .day.full {
+        background-color: #8bc34a;
+        z-index: 0;
+      }
+      button {
+        padding: 10px 15px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="calendar-container">
+      <div class="calendar-nav">
+        <button id="prevMonthBtn">Previous</button>
+        <div id="currentMonthYear"></div>
+        <button id="nextMonthBtn">Next</button>
+      </div>
+      <div class="calendar-header">Select your booking dates</div>
+      <div class="calendar"></div>
+    </div>
+
+    <script>
+      const calendar = document.querySelector(".calendar");
+      const currentMonthYear = document.getElementById("currentMonthYear");
+      const prevMonthBtn = document.getElementById("prevMonthBtn");
+      const nextMonthBtn = document.getElementById("nextMonthBtn");
+
+      let today = new Date();
+      let currentMonth = today.getMonth();
+      let currentYear = today.getFullYear();
+
+      let selectingStart = true;
+      let startDate = null;
+      let endDate = null;
+
+      function updateCalendar() {
+        calendar.innerHTML = "";
+
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        const daysInMonth = lastDay.getDate();
+
+        currentMonthYear.textContent = `${firstDay.toLocaleString("default", {
+          month: "long",
+        })} ${currentYear}`;
+
+        for (let i = 1; i <= daysInMonth; i++) {
+          const dayDiv = document.createElement("div");
+          dayDiv.className = "day";
+          const span = document.createElement("span");
+          span.textContent = i;
+
+          const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(
+            2,
+            "0"
+          )}-${String(i).padStart(2, "0")}`;
+          dayDiv.dataset.date = dateStr;
+          dayDiv.appendChild(span);
+
+          const dayDate = new Date(dateStr);
+
+          // Highlight previously selected dates
+          if (startDate && endDate) {
+            if (dayDate.getTime() === startDate.getTime()) {
+              dayDiv.classList.add("afternoon");
+            } else if (dayDate.getTime() === endDate.getTime()) {
+              dayDiv.classList.add("morning");
+            } else if (dayDate > startDate && dayDate < endDate) {
+              dayDiv.classList.add("full");
+            }
+          } else if (startDate && dayDate.getTime() === startDate.getTime()) {
+            dayDiv.classList.add("afternoon");
+          }
+
+          // Disable dates before startDate
+          if (!selectingStart && dayDate < startDate) {
+            dayDiv.classList.add("disabled");
+          }
+
+          dayDiv.addEventListener("click", () => handleDateSelection(dayDiv));
+          calendar.appendChild(dayDiv);
+        }
+
+        if (
+          currentYear === today.getFullYear() &&
+          currentMonth === today.getMonth()
+        ) {
+          prevMonthBtn.disabled = true;
+        } else {
+          prevMonthBtn.disabled = false;
+        }
+      }
+
+      function handleDateSelection(dayDiv) {
+        const selectedDate = new Date(dayDiv.dataset.date);
+
+        if (selectingStart) {
+          startDate = selectedDate;
+          endDate = null; // Reset end date
+          clearSelection();
+          dayDiv.classList.add("afternoon");
+          selectingStart = false;
+        } else {
+          if (selectedDate <= startDate) {
+            alert("End date must be after the start date.");
+            return;
+          }
+          endDate = selectedDate;
+          dayDiv.classList.add("morning");
+          highlightRange();
+          selectingStart = true;
+        }
+        updateDisabledDays();
+      }
+
+      function updateDisabledDays() {
+        const allDays = document.querySelectorAll(".day");
+        allDays.forEach((day) => {
+          const dayDate = new Date(day.dataset.date);
+
+          if (!selectingStart && dayDate < startDate) {
+            day.classList.add("disabled");
+          } else {
+            day.classList.remove("disabled");
+          }
+        });
+      }
+
+      function clearSelection() {
+        document.querySelectorAll(".day").forEach((day) => {
+          day.classList.remove("afternoon", "morning", "full", "disabled");
+        });
+      }
+
+      function highlightRange() {
+        const allDays = document.querySelectorAll(".day");
+        allDays.forEach((day) => {
+          const dayDate = new Date(day.dataset.date);
+
+          if (dayDate > startDate && dayDate < endDate) {
+            day.classList.add("full");
+          }
+        });
+      }
+
+      prevMonthBtn.addEventListener("click", () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+          currentMonth = 11;
+          currentYear--;
+        }
+        updateCalendar();
+      });
+
+      nextMonthBtn.addEventListener("click", () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+        updateCalendar();
+      });
+
+      updateCalendar();
+    </script>
+  </body>
+</html>
