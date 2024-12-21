@@ -59,6 +59,8 @@
         transform: translate(-50%, -50%);
         font-size: 14px;
         z-index: 2; /* Ensure text stays on top */
+        pointer-events: none;
+        user-select: none;
       }
 
       .day.afternoon::after {
@@ -170,13 +172,13 @@
 
           dayDiv.className = "day";
           //If the date have already passed then disable those tiles
-          if (
-            i < today.getUTCDate() &&
-            currentYear == today.getUTCFullYear() &&
-            currentMonth == today.getUTCMonth()
-          ) {
-            dayDiv.classList.add("disabled");
-          }
+          // if (
+          //   i < today.getUTCDate() &&
+          //   currentYear == today.getUTCFullYear() &&
+          //   currentMonth == today.getUTCMonth()
+          // ) {
+          //   dayDiv.classList.add("disabled");
+          // }
 
           const span = document.createElement("span");
           span.textContent = i;
@@ -186,9 +188,17 @@
             "0"
           )}-${String(i).padStart(2, "0")}`;
           dayDiv.dataset.date = dateStr;
+
           dayDiv.appendChild(span);
 
+          //If the date have already passed then disable those tiles
           const dayDate = new Date(`${dateStr}T00:00:00Z`);
+          if (dayDate < today) {
+            dayDiv.classList.add("disabled");
+          }
+          if (startDate && !endDate && dayDate < startDate) {
+            dayDiv.classList.add("disabled");
+          }
 
           dayDiv.addEventListener("click", () => handleDateSelection(dayDiv));
           calendar.appendChild(dayDiv);
