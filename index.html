@@ -126,14 +126,21 @@
       let selectingStart = true;
       let startDate = null;
       let endDate = null;
-
+      const occupiedDates = [
+        { startDate: "2024-12-10", endDate: "2024-12-15" },
+        { startDate: "2024-12-3", endDate: "2024-12-4" },
+        { startDate: "2024-12-8", endDate: "2024-12-10" },
+        { startDate: "2024-12-29", endDate: "2025-01-3" },
+      ];
+      occupiedDates.sort((a, b) => {
+        return new Date(b.startDate) - new Date(a.startDate);
+      });
+      occupiedDates.reverse();
+      console.log(occupiedDates);
+      function normalizeDate(date) {
+        return date.toISOString().split("T")[0]; // Gets YYYY-MM-DD
+      }
       function updateCalendar() {
-        const occupiedDates = [
-          { startDate: "2024-12-10", endDate: "2024-12-15" },
-          { startDate: "2024-12-3", endDate: "2024-12-4" },
-          { startDate: "2024-12-8", endDate: "2024-12-10" },
-        ];
-
         calendar.innerHTML = "";
 
         const firstDay = new Date(currentYear, currentMonth, 1);
@@ -296,26 +303,21 @@
         allDays.forEach((day) => {
           const dayDate = new Date(day.dataset.date);
 
-          if (startDate.getDate() === dayDate.getDate() && !endDate) {
+          if (normalizeDate(startDate) === normalizeDate(dayDate) && !endDate) {
             day.classList.add("afternoon");
 
             return;
           }
-          console.log(
-            endDate &&
-              dayDate.getDate() >= startDate.getDate() &&
-              dayDate.getDate() <= endDate.getDate()
-          );
           // Highlight range if both startDate and endDate exist
           if (
             endDate &&
-            dayDate.getDate() >= startDate.getDate() &&
-            dayDate.getDate() <= endDate.getDate()
+            normalizeDate(dayDate) >= normalizeDate(startDate) &&
+            normalizeDate(dayDate) <= normalizeDate(endDate)
           ) {
-            if (dayDate.getDate() === startDate.getDate()) {
+            if (normalizeDate(dayDate) === normalizeDate(startDate)) {
               // Start date gets "afternoon" class
               day.classList.add("afternoon");
-            } else if (dayDate.getDate() === endDate.getDate()) {
+            } else if (normalizeDate(dayDate) === normalizeDate(endDate)) {
               // End date gets "morning" class
               day.classList.add("morning");
             } else {
