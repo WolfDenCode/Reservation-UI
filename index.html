@@ -145,7 +145,7 @@
           new Date(`${b.startDate}T00:00:00Z`)
         );
       });
-
+      console.log(occupiedDates);
       function normalizeDate(date) {
         return date.toISOString().split("T")[0]; // Get YYYY-MM-DD format
       }
@@ -306,7 +306,20 @@
             currentYear,
             lastDay
           );
-          if (start && end) {
+
+          if (!start || !end) return;
+
+          const displayFullStart =
+            normalizeDate(start) > normalizeDate(startDate);
+          const displayFullEnd = normalizeDate(end) < normalizeDate(endDate);
+
+          if (displayFullStart && displayFullEnd) {
+            highlightRange(start, end, false, false);
+          } else if (displayFullStart) {
+            highlightRange(start, end, false, true);
+          } else if (displayFullEnd) {
+            highlightRange(start, end, true, false);
+          } else {
             highlightRange(start, end);
           }
         } else if (
@@ -315,7 +328,7 @@
           startDate.getUTCMonth() == currentMonth &&
           startDate.getUTCFullYear() == currentYear
         ) {
-          highlightRange(startDate, null);
+          highlightRange(startDate, null); // Only highlight the start date
         }
       }
 
