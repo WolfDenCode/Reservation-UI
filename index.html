@@ -214,6 +214,14 @@
         const selectedDate = new Date(`${dayDiv.dataset.date}T00:00:00Z`);
 
         if (selectingStart) {
+          if (
+            occupiedDates.find(
+              (x) => x.startDate == normalizeDate(selectedDate)
+            )
+          ) {
+            alert("Arrival date is already booked");
+            return;
+          }
           startDate = selectedDate;
           endDate = null; // Reset end date
           clearSelection();
@@ -222,6 +230,20 @@
         } else {
           if (selectedDate <= startDate) {
             alert("End date must be after the start date.");
+            return;
+          }
+          // check if selection is overlapping
+
+          const noOverlaps = occupiedDates.every((occupiedDate) => {
+            const isOverlapping =
+              (normalizeDate(startDate) > occupiedDate.startDate &&
+                normalizeDate(startDate) < occupiedDate.endDate) ||
+              (occupiedDate.startDate > normalizeDate(startDate) &&
+                occupiedDate.startDate < normalizeDate(selectedDate));
+            return !isOverlapping;
+          });
+          if (!noOverlaps) {
+            alert("You are trying to book already booked dates.");
             return;
           }
           endDate = selectedDate;
