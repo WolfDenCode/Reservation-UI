@@ -161,9 +161,23 @@
           month: "long",
         })} ${currentYear}`;
 
+        prevMonthBtn.disabled =
+          currentYear == today.getUTCFullYear() &&
+          currentMonth == today.getUTCMonth();
+
         for (let i = 1; i <= daysInMonth; i++) {
           const dayDiv = document.createElement("div");
+
           dayDiv.className = "day";
+          //If the date have already passed then disable those tiles
+          if (
+            i < today.getUTCDate() &&
+            currentYear == today.getUTCFullYear() &&
+            currentMonth == today.getUTCMonth()
+          ) {
+            dayDiv.classList.add("disabled");
+          }
+
           const span = document.createElement("span");
           span.textContent = i;
 
@@ -186,6 +200,7 @@
           currentYear,
           lastDay
         );
+        disableFullyOccupiedTiles();
         persistUserSelection(
           startDate,
           endDate,
@@ -218,6 +233,18 @@
       function clearSelection() {
         document.querySelectorAll(".day").forEach((day) => {
           day.classList.remove("afternoon", "morning", "full", "disabled");
+        });
+      }
+
+      function disableFullyOccupiedTiles() {
+        document.querySelectorAll(".day").forEach((day) => {
+          if (
+            day.classList.contains("full") ||
+            (day.classList.contains("morning") &&
+              day.classList.contains("afternoon"))
+          ) {
+            day.classList.add("disabled");
+          }
         });
       }
 
