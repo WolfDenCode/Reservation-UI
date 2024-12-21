@@ -254,6 +254,7 @@
             currentYear,
             lastDay
           );
+
           if (start && end) {
             highlightRange(start, end);
           }
@@ -297,19 +298,30 @@
 
           if (startDate.getDate() === dayDate.getDate() && !endDate) {
             day.classList.add("afternoon");
+
             return;
           }
-
-          if (!endDate || dayDate < startDate || dayDate > endDate) {
-            return;
-          }
-
-          if (dayDate.getDate() === startDate.getDate()) {
-            day.classList.add("afternoon");
-          } else if (dayDate.getDate() === endDate.getDate()) {
-            day.classList.add("morning");
-          } else {
-            day.classList.add("full");
+          console.log(
+            endDate &&
+              dayDate.getDate() >= startDate.getDate() &&
+              dayDate.getDate() <= endDate.getDate()
+          );
+          // Highlight range if both startDate and endDate exist
+          if (
+            endDate &&
+            dayDate.getDate() >= startDate.getDate() &&
+            dayDate.getDate() <= endDate.getDate()
+          ) {
+            if (dayDate.getDate() === startDate.getDate()) {
+              // Start date gets "afternoon" class
+              day.classList.add("afternoon");
+            } else if (dayDate.getDate() === endDate.getDate()) {
+              // End date gets "morning" class
+              day.classList.add("morning");
+            } else {
+              // All intermediate dates get "full" class
+              day.classList.add("full");
+            }
           }
         });
       }
