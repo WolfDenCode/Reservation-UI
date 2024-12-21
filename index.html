@@ -119,33 +119,43 @@
       const prevMonthBtn = document.getElementById("prevMonthBtn");
       const nextMonthBtn = document.getElementById("nextMonthBtn");
 
-      let today = new Date();
-      let currentMonth = today.getMonth();
-      let currentYear = today.getFullYear();
+      let today = new Date(
+        Date.UTC(
+          new Date().getUTCFullYear(),
+          new Date().getUTCMonth(),
+          new Date().getUTCDate()
+        )
+      );
+      let currentMonth = today.getUTCMonth();
+      let currentYear = today.getUTCFullYear();
 
       let selectingStart = true;
       let startDate = null;
       let endDate = null;
       const occupiedDates = [
         { startDate: "2024-12-10", endDate: "2024-12-15" },
-        { startDate: "2024-12-3", endDate: "2024-12-4" },
-        { startDate: "2024-12-8", endDate: "2024-12-10" },
-        { startDate: "2024-12-29", endDate: "2025-01-3" },
+        { startDate: "2024-12-03", endDate: "2024-12-04" },
+        { startDate: "2024-12-08", endDate: "2024-12-10" },
+        { startDate: "2024-12-29", endDate: "2025-01-03" },
+        { startDate: "2025-03-01", endDate: "2025-05-02" },
       ];
       occupiedDates.sort((a, b) => {
-        return new Date(b.startDate) - new Date(a.startDate);
+        return (
+          new Date(`${a.startDate}T00:00:00Z`) -
+          new Date(`${b.startDate}T00:00:00Z`)
+        );
       });
-      occupiedDates.reverse();
-      console.log(occupiedDates);
+
       function normalizeDate(date) {
-        return date.toISOString().split("T")[0]; // Gets YYYY-MM-DD
+        return date.toISOString().split("T")[0]; // Get YYYY-MM-DD format
       }
+
       function updateCalendar() {
         calendar.innerHTML = "";
 
-        const firstDay = new Date(currentYear, currentMonth, 1);
-        const lastDay = new Date(currentYear, currentMonth + 1, 0);
-        const daysInMonth = lastDay.getDate();
+        const firstDay = new Date(Date.UTC(currentYear, currentMonth, 1));
+        const lastDay = new Date(Date.UTC(currentYear, currentMonth + 1, 0));
+        const daysInMonth = lastDay.getUTCDate();
 
         currentMonthYear.textContent = `${firstDay.toLocaleString("default", {
           month: "long",
@@ -164,7 +174,7 @@
           dayDiv.dataset.date = dateStr;
           dayDiv.appendChild(span);
 
-          const dayDate = new Date(dateStr);
+          const dayDate = new Date(`${dateStr}T00:00:00Z`);
 
           dayDiv.addEventListener("click", () => handleDateSelection(dayDiv));
           calendar.appendChild(dayDiv);
@@ -186,7 +196,7 @@
       }
 
       function handleDateSelection(dayDiv) {
-        const selectedDate = new Date(dayDiv.dataset.date);
+        const selectedDate = new Date(`${dayDiv.dataset.date}T00:00:00Z`);
 
         if (selectingStart) {
           startDate = selectedDate;
@@ -211,32 +221,34 @@
         });
       }
 
-      // Utility function to calculate the start and end of the highlighted range
       function calculateHighlightRange(
         occupation,
         currentMonth,
         currentYear,
         lastDay
       ) {
-        const startingDate = new Date(occupation.startDate);
-        const endingDate = new Date(occupation.endDate);
+        const startingDate = new Date(`${occupation.startDate}T00:00:00Z`);
+        const endingDate = new Date(`${occupation.endDate}T00:00:00Z`);
 
-        if (startingDate.getMonth() !== currentMonth) {
-          let d = startingDate;
+        if (
+          startingDate.getUTCMonth() !== currentMonth ||
+          startingDate.getUTCFullYear() !== currentYear
+        ) {
+          let d = new Date(startingDate);
           let monthStartDate = null;
           while (!monthStartDate && d <= endingDate) {
             if (
-              d.getMonth() === currentMonth &&
-              d.getFullYear() === currentYear
+              d.getUTCMonth() === currentMonth &&
+              d.getUTCFullYear() === currentYear
             ) {
               monthStartDate = new Date(d);
             }
-            d.setDate(d.getDate() + 1);
+            d.setUTCDate(d.getUTCDate() + 1);
           }
 
           if (
-            endingDate.getMonth() > currentMonth ||
-            endingDate.getFullYear() > currentYear
+            endingDate.getUTCMonth() > currentMonth ||
+            endingDate.getUTCFullYear() > currentYear
           ) {
             return { start: monthStartDate, end: lastDay };
           } else {
@@ -247,7 +259,6 @@
         }
       }
 
-      // Highlight occupied dates
       function highlightOccupiedDates(
         occupiedDates,
         currentMonth,
@@ -261,14 +272,23 @@
             currentYear,
             lastDay
           );
+          if (!start || !end) return;
 
-          if (start && end) {
+          const displayFullStart = normalizeDate(start) > occupation.startDate;
+          const displayFullEnd = normalizeDate(end) < occupation.endDate;
+
+          if (displayFullStart && displayFullEnd) {
+            highlightRange(start, end, false, false);
+          } else if (displayFullStart) {
+            highlightRange(start, end, false, true);
+          } else if (displayFullEnd) {
+            highlightRange(start, end, true, false);
+          } else {
             highlightRange(start, end);
           }
         });
       }
 
-      // Persistent highlighting for user selection
       function persistUserSelection(
         startDate,
         endDate,
@@ -278,7 +298,10 @@
       ) {
         if (startDate && endDate) {
           const { start, end } = calculateHighlightRange(
-            { startDate, endDate },
+            {
+              startDate: normalizeDate(startDate),
+              endDate: normalizeDate(endDate),
+            },
             currentMonth,
             currentYear,
             lastDay
@@ -289,39 +312,45 @@
         } else if (
           startDate &&
           !endDate &&
-          startDate.getMonth() == currentMonth &&
-          startDate.getFullYear() == currentYear
+          startDate.getUTCMonth() == currentMonth &&
+          startDate.getUTCFullYear() == currentYear
         ) {
           highlightRange(startDate, null);
         }
       }
 
-      function highlightRange(startDate, endDate) {
+      function highlightRange(
+        startDate,
+        endDate,
+        startTriangle = true,
+        endTriangle = true
+      ) {
         if (!startDate) return;
 
         const allDays = document.querySelectorAll(".day");
         allDays.forEach((day) => {
-          const dayDate = new Date(day.dataset.date);
+          const dayDate = new Date(`${day.dataset.date}T00:00:00Z`);
 
           if (normalizeDate(startDate) === normalizeDate(dayDate) && !endDate) {
             day.classList.add("afternoon");
-
             return;
           }
-          // Highlight range if both startDate and endDate exist
           if (
             endDate &&
             normalizeDate(dayDate) >= normalizeDate(startDate) &&
             normalizeDate(dayDate) <= normalizeDate(endDate)
           ) {
-            if (normalizeDate(dayDate) === normalizeDate(startDate)) {
-              // Start date gets "afternoon" class
+            if (
+              normalizeDate(dayDate) === normalizeDate(startDate) &&
+              startTriangle
+            ) {
               day.classList.add("afternoon");
-            } else if (normalizeDate(dayDate) === normalizeDate(endDate)) {
-              // End date gets "morning" class
+            } else if (
+              normalizeDate(dayDate) === normalizeDate(endDate) &&
+              endTriangle
+            ) {
               day.classList.add("morning");
             } else {
-              // All intermediate dates get "full" class
               day.classList.add("full");
             }
           }
