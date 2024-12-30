@@ -29,7 +29,23 @@
         align-items: center;
         margin-bottom: 10px;
       }
-
+      .calendar-nav button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: none;
+        border-radius: 50%;
+        background-color: #cfc9f6;
+      }
+      .calendar-nav button:hover {
+        background-color: #dedbf2;
+      }
+      .calendar-nav button span {
+        width: 100%;
+        height: 100%;
+        font-size: 30px;
+        font-weight: bolder;
+      }
       .calendar {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -39,6 +55,7 @@
 
       .day.disabled {
         pointer-events: none;
+        /* background-color: #dedbf2; */
         opacity: 0.5;
       }
 
@@ -198,9 +215,9 @@
   <body>
     <div class="calendar-container">
       <div class="calendar-nav">
-        <button id="prevMonthBtn">Previous</button>
+        <button id="prevMonthBtn"><span>&#8656;</span></button>
         <div id="currentMonthYear"></div>
-        <button id="nextMonthBtn">Next</button>
+        <button id="nextMonthBtn"><span>&#8658;</span></button>
       </div>
       <div class="calendar-header">Select your booking dates</div>
       <div class="calendar"></div>
@@ -211,7 +228,7 @@
         <div class="modal-content">
           <h2>Book your stay</h2>
           <div class="date-price">
-            <div class="dates">Fri, Jan 24 – Sun, Jan 26, 2025</div>
+            <div class="dates">Fri, Jan 24 - Sun, Jan 26, 2025</div>
             <div class="price">$998.00</div>
           </div>
 
@@ -227,7 +244,7 @@
 
             <div class="price-summary">
               <div class="nights"><span>3</span> Nights</div>
-              <div class="total"><span>Total</span><span>$998.00</span></div>
+              <div class="total">Total <span>998.00$</span></div>
             </div>
 
             <button class="submit-btn" type="submit">
@@ -239,6 +256,7 @@
     </div>
 
     <script>
+      //Booking & Calendar Logic
       const calendar = document.querySelector(".calendar");
       const currentMonthYear = document.getElementById("currentMonthYear");
       const prevMonthBtn = document.getElementById("prevMonthBtn");
@@ -563,11 +581,70 @@
       });
 
       updateCalendar();
+
+      // Modal Logic
       const dialog = document.getElementById("bookingDialog");
       const openModalBtn = document.querySelector(".open-modal-btn");
       const closeDialogBtn = document.getElementById("closeDialog");
 
+      let scrollTop = 0;
+
+      function disableScroll() {
+        // Get the current scroll position
+        scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+        // Disable scrolling by setting window.onscroll to a function that keeps the scroll position fixed
+        window.onscroll = function () {
+          window.scrollTo(0, scrollTop);
+        };
+      }
+
+      function enableScroll() {
+        // Re-enable scrolling by resetting window.onscroll
+        window.onscroll = null;
+      }
+      function nightsBetweenDates(date1, date2) {
+        // Convert dates to UTC timestamps
+        let utc1 = Date.UTC(
+          date1.getFullYear(),
+          date1.getMonth(),
+          date1.getDate()
+        );
+        let utc2 = Date.UTC(
+          date2.getFullYear(),
+          date2.getMonth(),
+          date2.getDate()
+        );
+
+        // Calculate the time difference in milliseconds
+        let timeDiff = Math.abs(utc2 - utc1);
+
+        // Convert milliseconds to days
+        let daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        return daysDiff;
+      }
       openModalBtn.addEventListener("click", () => {
+        if (!startDate && !endDate) {
+          alert("Please Select the arrival and departure");
+          return;
+        }
+        disableScroll();
+        const dateRange = (document.querySelector(
+          ".modal-content .date-price .dates"
+        ).innerHTML = `${normalizeDate(startDate)} - ${normalizeDate(
+          endDate
+        )}`);
+        document.querySelector(
+          ".modal-content .date-price .price"
+        ).innerHTML = `${350}/Night`;
+
+        let nights = nightsBetweenDates(startDate, endDate);
+        document.querySelector(".price-summary .total span").innerHTML = `${
+          nights * 350
+        }$`;
+        document.querySelector(".price-summary .nights span").innerHTML =
+          nights;
+
         dialog.showModal();
         dialog.classList.add("hide");
         setTimeout(() => {
@@ -581,6 +658,7 @@
         dialog.classList.add("hide");
         setTimeout(() => {
           dialog.close();
+          enableScroll();
         }, 300); // Match the transition duration
       });
 
