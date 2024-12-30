@@ -13,7 +13,7 @@
       }
 
       .calendar-container {
-        max-width: 800px;
+        max-width: 650px;
         margin: 0 auto;
         text-align: center;
       }
@@ -72,7 +72,7 @@
         height: 100%;
         clip-path: polygon(100% 0%, 100% 100%, 0% 100%);
 
-        background-color: #8bc34a;
+        background-color: #dedbf2;
         z-index: 1;
       }
 
@@ -84,12 +84,12 @@
         width: 100%;
         height: 100%;
         clip-path: polygon(0% 0%, 100% 0%, 0% 100%);
-        background-color: #8bc34a;
+        background-color: #dedbf2;
         z-index: 1;
       }
 
       .day.full {
-        background-color: #8bc34a;
+        background-color: #dedbf2;
         z-index: 0;
       }
       button {
@@ -102,6 +102,97 @@
         background-color: #ccc;
         cursor: not-allowed;
       }
+
+      .open-modal-btn {
+        background: #4a00e0;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        margin: 2rem 0;
+      }
+
+      .open-modal-btn:hover {
+        background: #3a00b3;
+      }
+
+      dialog {
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 400px;
+        padding: 20px;
+        box-sizing: border-box;
+        opacity: 0;
+        transform: translateY(-20px);
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+
+      dialog.show {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      dialog.hide {
+        opacity: 0;
+        transform: translateY(-20px);
+        pointer-events: none;
+      }
+
+      .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+
+      .modal-content h2 {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+      }
+
+      .date-price,
+      .price-summary {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .booking-form label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      .booking-form input {
+        width: 100%;
+        margin-bottom: 15px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      .submit-btn {
+        background: #4a00e0;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 1rem;
+      }
+
+      .submit-btn:hover {
+        background: #3a00b3;
+      }
     </style>
   </head>
   <body>
@@ -113,6 +204,38 @@
       </div>
       <div class="calendar-header">Select your booking dates</div>
       <div class="calendar"></div>
+      <button class="open-modal-btn">Open Booking Widget</button>
+
+      <dialog id="bookingDialog">
+        <button class="close-btn" id="closeDialog">&times;</button>
+        <div class="modal-content">
+          <h2>Book your stay</h2>
+          <div class="date-price">
+            <div class="dates">Fri, Jan 24 – Sun, Jan 26, 2025</div>
+            <div class="price">$998.00</div>
+          </div>
+
+          <form class="booking-form">
+            <label for="name">Name<span>*</span></label>
+            <input type="text" id="name" required />
+
+            <label for="email">Email<span>*</span></label>
+            <input type="email" id="email" required />
+
+            <label for="phone">Phone number<span>*</span></label>
+            <input type="tel" id="phone" required />
+
+            <div class="price-summary">
+              <div class="nights"><span>3</span> Nights</div>
+              <div class="total"><span>Total</span><span>$998.00</span></div>
+            </div>
+
+            <button class="submit-btn" type="submit">
+              Send booking request
+            </button>
+          </form>
+        </div>
+      </dialog>
     </div>
 
     <script>
@@ -171,14 +294,6 @@
           const dayDiv = document.createElement("div");
 
           dayDiv.className = "day";
-          //If the date have already passed then disable those tiles
-          // if (
-          //   i < today.getUTCDate() &&
-          //   currentYear == today.getUTCFullYear() &&
-          //   currentMonth == today.getUTCMonth()
-          // ) {
-          //   dayDiv.classList.add("disabled");
-          // }
 
           const span = document.createElement("span");
           span.textContent = i;
@@ -448,6 +563,32 @@
       });
 
       updateCalendar();
+      const dialog = document.getElementById("bookingDialog");
+      const openModalBtn = document.querySelector(".open-modal-btn");
+      const closeDialogBtn = document.getElementById("closeDialog");
+
+      openModalBtn.addEventListener("click", () => {
+        dialog.showModal();
+        dialog.classList.add("hide");
+        setTimeout(() => {
+          dialog.classList.remove("hide");
+          dialog.classList.add("show");
+        }, 10);
+      });
+
+      closeDialogBtn.addEventListener("click", () => {
+        dialog.classList.remove("show");
+        dialog.classList.add("hide");
+        setTimeout(() => {
+          dialog.close();
+        }, 300); // Match the transition duration
+      });
+
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+          closeDialogBtn.click();
+        }
+      });
     </script>
   </body>
 </html>
