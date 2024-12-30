@@ -586,7 +586,7 @@
       const dialog = document.getElementById("bookingDialog");
       const openModalBtn = document.querySelector(".open-modal-btn");
       const closeDialogBtn = document.getElementById("closeDialog");
-
+      const submitBookingBtn = document.querySelector("dialog .submit-btn");
       let scrollTop = 0;
 
       function disableScroll() {
@@ -666,6 +666,19 @@
         if (event.target === dialog) {
           closeDialogBtn.click();
         }
+      });
+
+      submitBookingBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        occupiedDates.push({
+          startDate: normalizeDate(startDate),
+          endDate: normalizeDate(endDate),
+        });
+        console.log(occupiedDates);
+        startDate = null;
+        endDate = null;
+        closeDialogBtn.click();
+        updateCalendar();
       });
     </script>
   </body>
