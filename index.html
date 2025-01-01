@@ -27,9 +27,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 20px 0;
-        margin-bottom: 10px;
         background-color: white;
-        border-bottom: 1px solid #ddd;
       }
 
       .navbar .logo {
@@ -74,7 +72,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.3); /* Semi-transparent overlay */
+        background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
         z-index: 1;
       }
       .cta {
@@ -149,16 +147,19 @@
           padding: 12px 20px;
         }
       }
+      .hidden {
+        display: none;
+      }
       .calendar-container {
         max-width: 500px;
         width: 100%;
         margin: 0 auto;
         text-align: center;
         background-color: white;
-        padding: 50px;
+        padding: 20px 50px;
         border-radius: 10px;
         box-shadow: 0 0 10px rgb(80, 77, 77);
-        display: none;
+
         position: relative;
         z-index: 3;
       }
@@ -372,7 +373,7 @@
         <h4>Award-winning resorts in Swiss alps.</h4>
         <button>Explore & Book</button>
       </div>
-      <div class="calendar-container">
+      <div class="calendar-container hidden">
         <div class="calendar-nav">
           <button id="prevMonthBtn"><span>&#8656;</span></button>
           <div id="currentMonthYear"></div>
@@ -415,6 +416,11 @@
       </div>
     </div>
     <script>
+      const calendarContaier = document.querySelector(".calendar-container");
+      document.querySelector(".cta button").addEventListener("click", () => {
+        calendarContaier.classList.toggle("hidden");
+        document.querySelector(".cta").classList.toggle("hidden");
+      });
       //Booking & Calendar Logic
       const calendar = document.querySelector(".calendar");
       const currentMonthYear = document.getElementById("currentMonthYear");
