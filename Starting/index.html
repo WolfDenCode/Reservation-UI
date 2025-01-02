@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Booking UI</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="booking.js"></script>
+  </head>
+  <body>
+    <!-- #region Navbar -->
+    <div class="navbar">
+      <div class="logo">CHALET</div>
+      <div class="nav-links">
+        <a href="#">Locations</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+    <!-- #endregion -->
+
+    <div class="landing">
+      <div class="cta">
+        <h1>Book the best trip of your life</h1>
+        <h4>Award-winning resorts in Swiss alps.</h4>
+        <button>Explore & Book</button>
+      </div>
+
+      <!-- #region Calendar & Booking -->
+      <div class="calendar-container hidden">
+        <div class="calendar-nav">
+          <button id="prevMonthBtn"><span>&#8656;</span></button>
+          <div id="currentMonthYear"></div>
+          <button id="nextMonthBtn"><span>&#8658;</span></button>
+        </div>
+        <div class="calendar-header">Book Your Stay</div>
+        <div class="calendar"></div>
+        <button class="open-modal-btn">Book Selected</button>
+
+        <dialog id="bookingDialog">
+          <button class="close-btn" id="closeDialog">&times;</button>
+          <div class="modal-content">
+            <h2>Book your stay</h2>
+            <div class="date-price">
+              <div class="dates">Fri, Jan 24 - Sun, Jan 26, 2025</div>
+              <div class="price">$998.00</div>
+            </div>
+
+            <form class="booking-form">
+              <label for="name">Name<span>*</span></label>
+              <input type="text" id="name" required />
+
+              <label for="email">Email<span>*</span></label>
+              <input type="email" id="email" required />
+
+              <label for="phone">Phone number<span>*</span></label>
+              <input type="tel" id="phone" required />
+
+              <div class="price-summary">
+                <div class="nights"><span>3</span> Nights</div>
+                <div class="total">Total <span>998.00$</span></div>
+              </div>
+
+              <button class="submit-btn" type="submit">
+                Send booking request
+              </button>
+            </form>
+          </div>
+        </dialog>
+      </div>
+      <!-- #endregion -->
+    </div>
+  </body>
+</html>
